@@ -1,0 +1,67 @@
+version: '3.9'
+services:
+    pgadmin:
+        container_name: pgadmin
+        image: dpage/pgadmin4
+        networks:
+            - ic_network
+        environment:
+            PGADMIN_DEFAULT_EMAIL: yvantekam@yahoo.fr
+            PGADMIN_DEFAULT_PASSWORD: savant
+        ports:
+            - "5050:80"
+        volumes:
+            - ./servers.json:/pgadmin4/servers.json
+            - pgadmin_data:/var/lib/pgadmin
+    
+    ic-webapp:
+        container_name: ic-webapp
+        image: yvo39/web-ic:latest
+        ports:
+            - "8080:8080"
+        environment:
+            ODOO_URL: http://localhost:8069/
+            PGADMIN_URL: http://localhost:5050/
+        networks:
+            - ic_network
+
+    postgres:
+        container_name: postgres
+        image: postgres:10
+        environment:
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: savant
+            POSTGRES_DB: postgres
+        ports:
+            - '5432:5432'
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        networks:
+            - ic_network
+
+    odoo:
+        container_name: odoo
+        image: odoo:17.0
+        depends_on:
+            - postgres
+        ports:
+            - '8069:8069'
+        volumes:
+            - /data_docker/config:/etc/odoo
+            - /data_docker/addons:/mnt/extra-addons
+            - odoo-web-data:/var/lib/odoo
+        environment:
+            USER: root
+            PASSWORD: savant
+            HOST: postgres
+        networks:
+            - ic_network
+
+volumes:
+    odoo-web-data:
+    pgdata:
+    pgadmin_data:
+
+networks:
+    ic_network:
+      driver: bridge
